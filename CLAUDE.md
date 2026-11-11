@@ -1,6 +1,6 @@
 # AXIS IP Utility
 
-axis-ip is an open-source Axis camera IP utility for macOS, written in Go. The official AXIS IP Utility is Windows-only; it finds devices on the same L2 segment and assigns IP addresses. axis-ip has a CLI and a TUI instead of a GUI, discovers devices over mDNS and changes addresses through VAPIX. The implementation is the Go package at the repository root; see README.md for usage. This file holds research notes.
+axis-ip is an open-source Axis camera IP utility for macOS and Linux, written in Go. The official AXIS IP Utility is Windows-only; it finds devices on the same L2 segment and assigns IP addresses. axis-ip has a CLI and a TUI instead of a GUI, discovers devices over mDNS and changes addresses through VAPIX. The implementation is the Go package at the repository root; see README.md for usage. This file holds research notes.
 
 ## Language
 
@@ -20,7 +20,7 @@ Notes about specific devices on the development LAN (MACs, addresses, test resul
 
 ## Releasing
 
-Pushing a `v*` tag runs `.github/workflows/release.yml`, which tests on macOS, creates the GitHub release from the matching CHANGELOG.md section, points `Formula/axis-ip.rb` in `bellx2/homebrew-tap` at the new tarball, and installs it with Homebrew to verify. It needs the `TAP_GITHUB_TOKEN` secret (a token that can write to `bellx2/homebrew-tap`).
+Pushing a `v*` tag runs `.github/workflows/release.yml`, which tests on Linux and macOS, creates the GitHub release from the matching CHANGELOG.md section, attaches static Linux binaries (amd64 and arm64) with checksums, points `Formula/axis-ip.rb` in `bellx2/homebrew-tap` at the new tarball, and installs it with Homebrew to verify. It needs the `TAP_GITHUB_TOKEN` secret (a token that can write to `bellx2/homebrew-tap`).
 
 To release:
 
@@ -28,7 +28,9 @@ To release:
 2. Commit and push to `main`.
 3. `git tag v<version> && git push origin v<version>`.
 
-Do not edit the formula in the tap by hand for a normal release.
+Do not edit the formula in the tap by hand for a normal release. The formula stays macOS-only; Linux is distributed as release binaries only.
+
+`.github/workflows/ci.yml` runs vet and tests on macOS and Linux for every push to `main` and every pull request.
 
 ## Discovery
 
@@ -37,6 +39,8 @@ Use the service type `_axis-video._tcp.local.`. To include NVRs, also browse `_a
 On macOS, mDNSResponder owns UDP 5353. `dns-sd` and the DNS-SD API (`DNSServiceBrowse` → `DNSServiceResolve` → `DNSServiceGetAddrInfo`) read its cache, so all three devices appeared within one second. Binding 5353 exclusively from a Go socket fails; to share the port, use `SO_REUSEPORT`.
 
 Inside the Cursor sandbox, `dns-sd` fails with `DNSServiceBrowse failed -65563 (Service Not Running)`. Test discovery outside the sandbox.
+
+On Linux, discovery is pure Go (`mdns_query.go`, selected by `mdns_other.go` on every non-darwin platform). It sends one question per packet from an ephemeral UDP port to 224.0.0.251:5353 on each multicast interface, and responders answer by unicast to that port (RFC 6762 section 6.7, legacy unicast). It walks PTR → SRV/TXT → A, repeating unanswered questions every 500 ms. This avoids binding 5353, so it coexists with avahi-daemon and systemd-resolved. Firewalls must let the unicast replies (source port 5353) in. The querier does not depend on Linux, so it can be checked from a Mac with `AXIS_IP_LIVE=1 go test -run TestQueryMDNSLive ./...`; on the development LAN it found all three devices within the default 2 seconds.
 
 UDP 30718 is the Lantronix Discovery Protocol port and is not used for Axis discovery.
 

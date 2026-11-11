@@ -1,4 +1,5 @@
-# Pushing a v* tag tests the code, creates a GitHub release and updates the Homebrew formula.
+# Pushing a v* tag tests the code, creates a GitHub release with Linux binaries
+# and updates the Homebrew formula (macOS).
 name: Release
 
 on:
@@ -9,7 +10,22 @@ permissions:
   contents: write
 
 jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: |
+          go vet ./...
+          go test ./...
+
   release:
+    needs: test-linux
     # cgo calls the macOS DNS-SD API, so build and test on macOS.
     runs-on: macos-latest
     steps:
@@ -44,6 +60,21 @@ jobs:
           # Use the CHANGELOG.md section of this version as release notes.
           awk -v h="## $VERSION - " 'index($0, h) == 1 {f=1; next} /^## / {if (f) exit} f' CHANGELOG.md > notes.md
           gh release create "$GITHUB_REF_NAME" --verify-tag --title "axis-ip $VERSION" --notes-file notes.md
+
+      - name: Attach Linux binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Linux discovery is pure Go, so cross-compile static binaries without cgo.
+          for arch in amd64 arm64; do
+            dir="axis-ip_${VERSION}_linux_${arch}"
+            mkdir -p "$dir"
+            CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -trimpath -ldflags "-s -w" -o "$dir/axis-ip" .
+            cp LICENSE README.md README_ja.md "$dir/"
+            tar czf "$dir.tar.gz" "$dir"
+          done
+          shasum -a 256 axis-ip_*_linux_*.tar.gz > checksums.txt
+          gh release upload "$GITHUB_REF_NAME" axis-ip_*_linux_*.tar.gz checksums.txt --clobber
 
       - name: Update the Homebrew formula
         env:

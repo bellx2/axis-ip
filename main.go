@@ -1,5 +1,5 @@
-// axis-ip is an Axis camera IP utility for macOS.
-// It discovers devices over mDNS (DNS-SD) and changes addresses via the VAPIX Network Settings API.
+// axis-ip is an Axis camera IP utility for macOS and Linux.
+// It discovers devices over mDNS and changes addresses via the VAPIX Network Settings API.
 package main
 
 import (
@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-const version = "0.3.3"
+const version = "0.4.0"
 
 const passwordEnv = "AXIS_PASSWORD"
 

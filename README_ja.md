@@ -2,19 +2,19 @@
 
 [English](README.md) | 日本語
 
-macOS 向けの Axis カメラ IP ユーティリティ（CLI と TUI）。同じ L2 セグメント上の Axis 機器を mDNS で探し、VAPIX Network Settings API で IPv4 アドレスを変更する。
+macOS と Linux 向けの Axis カメラ IP ユーティリティ（CLI と TUI）。同じ L2 セグメント上の Axis 機器を mDNS で探し、VAPIX Network Settings API で IPv4 アドレスを変更する。
 
-公式の AXIS IP Utility は Windows 専用である。axis-ip は、機器を探す、ネットワーク設定を読む、静的アドレスを割り当てる、DHCP に戻す、という日常の作業を Mac で行う。
+公式の AXIS IP Utility は Windows 専用である。axis-ip は、機器を探す、ネットワーク設定を読む、静的アドレスを割り当てる、DHCP に戻す、という日常の作業を Mac や Linux マシンで行う。
 
 ## 動作環境
 
-- macOS（探索に OS の DNS-SD API を cgo で使う）
-- Go 1.26 以降と Xcode Command Line Tools（cgo に C コンパイラが要る）
+- macOS、または amd64 / arm64 の Linux
 - AXIS OS 8.50 以降の Axis 機器（Network Settings API）
+- ソースからビルドする場合は Go 1.26 以降。macOS では Xcode Command Line Tools も要る（cgo に C コンパイラが要る）
 
 ## インストール
 
-### Homebrew
+### macOS：Homebrew
 
 ```sh
 brew install bellx2/tap/axis-ip
@@ -30,6 +30,17 @@ brew uninstall axis-ip
 ```
 
 初回の実行時に、ターミナルアプリへのローカルネットワークのアクセス許可を macOS が求めることがある。許可するか、[トラブルシューティング](#トラブルシューティング) を参照する。
+
+### Linux：ビルド済みバイナリ
+
+[リリースページ](https://github.com/bellx2/axis-ip/releases) から `axis-ip_<version>_linux_amd64.tar.gz` か `axis-ip_<version>_linux_arm64.tar.gz` をダウンロードし、`axis-ip` を `PATH` の通った場所に置く。
+
+```sh
+tar xzf axis-ip_<version>_linux_amd64.tar.gz
+sudo install axis-ip_<version>_linux_amd64/axis-ip /usr/local/bin/
+```
+
+バイナリは静的リンクで、ほかのパッケージは要らない。同じページの `checksums.txt` に SHA-256 がある。
 
 ### Go
 
@@ -128,15 +139,24 @@ IP は位置引数ではなく `-ip` で渡す。位置引数が残っている�
 
 ## 機器との通信
 
-- 探索は `DNSServiceBrowse`、`DNSServiceResolve`、`DNSServiceGetAddrInfo` で mDNSResponder のキャッシュを読む。UDP 5353 を自分では bind しない。
+- macOS の探索は `DNSServiceBrowse`、`DNSServiceResolve`、`DNSServiceGetAddrInfo` で mDNSResponder のキャッシュを読む。
+- Linux の探索は、空いている UDP ポートから mDNS の問い合わせを送り、機器はユニキャストで応答する（RFC 6762 の legacy unicast）。avahi-daemon も UDP 5353 も使わないので、avahi-daemon や systemd-resolved と同時に動く。
 - 認証は HTTP Digest（MD5 または SHA-256、qop=auth）。
 - まず HTTP で接続し、届かないかリダイレクトされたときは HTTPS に切り替える。HTTPS では自己署名証明書を受け入れる。
-- 書き込みには、この Mac から `-ip` のアドレスへ届く必要がある。別サブネットの固定アドレスしか持たない機器は、そのサブネットのアドレスをローカルインターフェイスへ一時的に足してから実行する。
+- 書き込みには、実行するマシンから `-ip` のアドレスへ届く必要がある。別サブネットの固定アドレスしか持たない機器は、そのサブネットのアドレスをローカルインターフェイスへ一時的に足してから実行する。例は次のとおり。
+
+  ```sh
+  sudo ifconfig en0 alias 192.168.0.50 netmask 255.255.255.0   # macOS
+  sudo ip addr add 192.168.0.50/24 dev eth0                    # Linux
+  ```
 
 ## トラブルシューティング
 
 - **`curl` は届くのに `no route to host` になる：** macOS のローカルネットワーク許可でバイナリが止められている。システム設定 > プライバシーとセキュリティ > ローカルネットワーク で使っているターミナルアプリをオンにし、ターミナルを再起動する。`curl` のような Apple 製のツールはこの制限を受けないので、`curl` が通っても許可がある証拠にはならない。
 - **`DNSServiceBrowse failed -65563 (Service Not Running)`：** mDNSResponder を使えないサンドボックス内で実行している。サンドボックスの外で実行する。
+- **Linux で `scan` が何も見つけない：** ファイアウォール（ufw、firewalld、nftables）がユニキャストの応答を落としている可能性がある。応答は UDP 5353 から空きポートへ届く。ローカルネットワークからの送信元ポート 5353 の UDP を許可するか、ファイアウォールを止めて切り分ける。
+- **WSL2：** 既定の NAT ネットワークではマルチキャストが LAN に届かない。mirrored モードを使う。
+- **コンテナ：** マルチキャストが LAN に届くよう、ホストネットワーク（`docker run --network host`）で実行する。
 
 ## ライセンス
 

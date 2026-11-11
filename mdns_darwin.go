@@ -14,23 +14,9 @@ import (
 	"unsafe"
 )
 
-// browseState collects the results of the C callbacks.
-type browseState struct {
-	instances map[string]*instance // keyed by full service name
-	hosts     map[string][]string  // hostname -> IPv4 addresses
-}
-
-type instance struct {
-	name    string
-	ifIndex uint32
-	host    string
-	port    int
-	mac     string
-}
-
 // browseRaw browses regtype for the given duration and returns the raw results.
 func browseRaw(regtype string, timeout time.Duration) (*browseState, error) {
-	st := &browseState{instances: map[string]*instance{}, hosts: map[string][]string{}}
+	st := newBrowseState()
 	h := cgo.NewHandle(st)
 	defer h.Delete()
 

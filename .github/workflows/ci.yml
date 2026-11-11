@@ -1,0 +1,34 @@
+# Run vet and tests on macOS (DNS-SD through cgo) and Linux (pure Go mDNS).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: |
+          go vet ./...
+          go test ./...
+
+      - name: Build Linux binaries without cgo
+        if: runner.os == 'Linux'
+        run: |
+          CGO_ENABLED=0 GOARCH=amd64 go build -o /dev/null .
+          CGO_ENABLED=0 GOARCH=arm64 go build -o /dev/null .

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 - 2026-11-11
+
+- Added Linux support. On Linux, discovery uses a pure Go mDNS querier that sends queries from an ephemeral port and receives unicast replies, so it needs neither avahi-daemon nor UDP 5353. macOS keeps using the system DNS-SD API.
+- Releases now include statically linked Linux binaries for amd64 and arm64, with SHA-256 checksums.
+- Added a CI workflow that runs vet and tests on macOS and Linux for every push to `main` and every pull request.
+- The TUI title now reads "AXIS IP Utility <version> by Bellx2".
+
 ## 0.3.3 - 2026-11-11
 
 - Added Homebrew installation (`brew install bellx2/tap/axis-ip`) to the README.

@@ -18,6 +18,24 @@ type Device struct {
 	IPv4  []string
 }
 
+// browseState holds raw discovery results before they are merged into devices.
+type browseState struct {
+	instances map[string]*instance // keyed by full service name
+	hosts     map[string][]string  // hostname -> IPv4 addresses
+}
+
+type instance struct {
+	name    string
+	ifIndex uint32
+	host    string
+	port    int
+	mac     string
+}
+
+func newBrowseState() *browseState {
+	return &browseState{instances: map[string]*instance{}, hosts: map[string][]string{}}
+}
+
 // scan browses _axis-video._tcp and returns the devices, deduplicated by MAC.
 func scan(timeout time.Duration) ([]Device, error) {
 	st, err := browseRaw(serviceType, timeout)
