@@ -112,3 +112,7 @@ axis-ip takes the password from, in order:
 
 - **`no route to host` although the device answers `curl`:** macOS Local Network privacy is blocking the binary. Enable your terminal app under System Settings > Privacy & Security > Local Network and restart it. Apple's own tools such as `curl` are exempt, so a working `curl` does not prove the permission is granted.
 - **`DNSServiceBrowse failed -65563 (Service Not Running)`:** you are running inside a sandbox that blocks mDNSResponder. Run axis-ip outside the sandbox.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
