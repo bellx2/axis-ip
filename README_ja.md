@@ -2,16 +2,16 @@
 
 [English](README.md) | 日本語
 
-macOS と Linux 向けの非公式な Axis カメラ IP ユーティリティ（CLI と TUI）。同じ L2 セグメント上の Axis 機器を mDNS で探し、VAPIX Network Settings API で IPv4 アドレスを変更する。
+macOS、Linux、Windows 向けの非公式な Axis カメラ IP ユーティリティ（CLI と TUI）。同じ L2 セグメント上の Axis 機器を mDNS で探し、VAPIX Network Settings API で IPv4 アドレスを変更する。
 
-公式の AXIS IP Utility は Windows 専用である。axis-ip は、機器を探す、ネットワーク設定を読む、静的アドレスを割り当てる、DHCP に戻す、という日常の作業を Mac や Linux マシンで行う。
+公式の AXIS IP Utility は Windows 専用である。axis-ip は、機器を探す、ネットワーク設定を読む、静的アドレスを割り当てる、DHCP に戻す、という日常の作業を Mac や Linux マシンで行う。Windows でも動き、スクリプトから使える CLI と、ほかの OS と同じ操作を提供する。
 
 > [!NOTE]
 > axis-ip は個人による非公式のプロジェクトであり、Axis Communications AB とは関係がなく、同社の承認やサポートを受けていない。Axis 製品についての問い合わせは Axis へ行う。
 
 ## 動作環境
 
-- macOS、または amd64 / arm64 の Linux
+- macOS、Linux（amd64 / arm64）、Windows 10 以降（amd64 / arm64）
 - AXIS OS 8.50 以降の Axis 機器（Network Settings API）
 - ソースからビルドする場合は Go 1.26 以降。macOS では Xcode Command Line Tools も要る（cgo に C コンパイラが要る）
 
@@ -44,6 +44,10 @@ sudo install axis-ip_<version>_linux_amd64/axis-ip /usr/local/bin/
 ```
 
 バイナリは静的リンクで、ほかのパッケージは要らない。同じページの `checksums.txt` に SHA-256 がある。
+
+### Windows：ビルド済みバイナリ
+
+[リリースページ](https://github.com/bellx2/axis-ip/releases) から `axis-ip_<version>_windows_amd64.zip` か `axis-ip_<version>_windows_arm64.zip` をダウンロードして展開し、Windows Terminal か PowerShell で `axis-ip.exe` を実行する。どこからでも実行するには、展開したフォルダを `PATH` に加える。実行ファイルのプロパティにはバージョンと著作権表示が入っている。
 
 ### Go
 
@@ -143,7 +147,7 @@ IP は位置引数ではなく `-ip` で渡す。位置引数が残っている�
 ## 機器との通信
 
 - macOS の探索は `DNSServiceBrowse`、`DNSServiceResolve`、`DNSServiceGetAddrInfo` で mDNSResponder のキャッシュを読む。
-- Linux の探索は、空いている UDP ポートから mDNS の問い合わせを送り、機器はユニキャストで応答する（RFC 6762 の legacy unicast）。avahi-daemon も UDP 5353 も使わないので、avahi-daemon や systemd-resolved と同時に動く。
+- Linux と Windows の探索は、空いている UDP ポートから mDNS の問い合わせを送り、機器はユニキャストで応答する（RFC 6762 の legacy unicast）。avahi-daemon も UDP 5353 も使わないので、avahi-daemon、systemd-resolved、Windows 組み込みの mDNS と同時に動く。
 - 認証は HTTP Digest（MD5 または SHA-256、qop=auth）。
 - まず HTTP で接続し、届かないかリダイレクトされたときは HTTPS に切り替える。HTTPS では自己署名証明書を受け入れる。
 - 書き込みには、実行するマシンから `-ip` のアドレスへ届く必要がある。別サブネットの固定アドレスしか持たない機器は、そのサブネットのアドレスをローカルインターフェイスへ一時的に足してから実行する。例は次のとおり。
@@ -151,6 +155,7 @@ IP は位置引数ではなく `-ip` で渡す。位置引数が残っている�
   ```sh
   sudo ifconfig en0 alias 192.168.0.50 netmask 255.255.255.0   # macOS
   sudo ip addr add 192.168.0.50/24 dev eth0                    # Linux
+  netsh interface ipv4 add address "Ethernet" 192.168.0.50 255.255.255.0   # Windows（管理者として実行）
   ```
 
 ## トラブルシューティング
@@ -158,12 +163,13 @@ IP は位置引数ではなく `-ip` で渡す。位置引数が残っている�
 - **`curl` は届くのに `no route to host` になる：** macOS のローカルネットワーク許可でバイナリが止められている。システム設定 > プライバシーとセキュリティ > ローカルネットワーク で使っているターミナルアプリをオンにし、ターミナルを再起動する。`curl` のような Apple 製のツールはこの制限を受けないので、`curl` が通っても許可がある証拠にはならない。
 - **`DNSServiceBrowse failed -65563 (Service Not Running)`：** mDNSResponder を使えないサンドボックス内で実行している。サンドボックスの外で実行する。
 - **Linux で `scan` が何も見つけない：** ファイアウォール（ufw、firewalld、nftables）がユニキャストの応答を落としている可能性がある。応答は UDP 5353 から空きポートへ届く。ローカルネットワークからの送信元ポート 5353 の UDP を許可するか、ファイアウォールを止めて切り分ける。
+- **Windows で `scan` が何も見つけない：** Windows Defender ファイアウォールがユニキャストの応答を落としている可能性がある。axis-ip.exe の通信を許可するか聞かれたら、プライベートネットワークで許可する。聞かれない場合は、axis-ip.exe について送信元ポート 5353 の UDP を許可する受信規則を足し、ネットワークのプロファイルがプライベートになっていることを確かめる。
 - **WSL2：** 既定の NAT ネットワークではマルチキャストが LAN に届かない。mirrored モードを使う。
 - **コンテナ：** マルチキャストが LAN に届くよう、ホストネットワーク（`docker run --network host`）で実行する。
 
 ## 商標
 
-AXIS、AXIS COMMUNICATIONS、AXIS OS、VAPIX は、Axis AB の各国における商標または登録商標である。Windows は Microsoft グループの商標、macOS は Apple Inc. の商標、Linux は Linus Torvalds の登録商標である。その他の商標はそれぞれの所有者に帰属する。本書では互換性の説明のためにのみ用いている。
+AXIS、AXIS COMMUNICATIONS、AXIS OS、VAPIX は、Axis AB の各国における商標または登録商標である。Windows と Windows Terminal は Microsoft グループの商標、macOS は Apple Inc. の商標、Linux は Linus Torvalds の登録商標である。その他の商標はそれぞれの所有者に帰属する。本書では互換性の説明のためにのみ用いている。
 
 ## ライセンス
 

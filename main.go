@@ -1,4 +1,4 @@
-// axis-ip is an Axis camera IP utility for macOS and Linux.
+// axis-ip is an Axis camera IP utility for macOS, Linux and Windows.
 // It discovers devices over mDNS and changes addresses via the VAPIX Network Settings API.
 package main
 
@@ -9,13 +9,14 @@ import (
 	"fmt"
 	"net/netip"
 	"os"
-	"os/exec"
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"golang.org/x/term"
 )
 
-const version = "0.4.1"
+const version = "0.4.2"
 
 const passwordEnv = "AXIS_PASSWORD"
 
@@ -317,19 +318,17 @@ func confirm(prompt string) bool {
 	return ans == "y" || ans == "yes"
 }
 
-// readPassword reads a password from the terminal with echo disabled.
+// readPassword reads a password with echo disabled. When stdin is not a
+// terminal (for example a pipe), it reads one line as is.
 func readPassword(prompt string) (string, error) {
 	fmt.Fprint(os.Stderr, prompt)
-	stty := func(arg string) error {
-		cmd := exec.Command("stty", arg)
-		cmd.Stdin = os.Stdin
-		return cmd.Run()
-	}
-	if err := stty("-echo"); err == nil {
-		defer func() {
-			stty("echo")
-			fmt.Fprintln(os.Stderr)
-		}()
+	if fd := int(os.Stdin.Fd()); term.IsTerminal(fd) {
+		b, err := term.ReadPassword(fd)
+		fmt.Fprintln(os.Stderr)
+		if err != nil {
+			return "", fmt.Errorf("cannot read password: %v", err)
+		}
+		return string(b), nil
 	}
 	line, err := stdin.ReadString('\n')
 	if err != nil && line == "" {

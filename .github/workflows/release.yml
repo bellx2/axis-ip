@@ -1,5 +1,5 @@
-# Pushing a v* tag tests the code, creates a GitHub release with Linux binaries
-# and updates the Homebrew formula (macOS).
+# Pushing a v* tag tests the code, creates a GitHub release with Linux and Windows
+# binaries and updates the Homebrew formula (macOS).
 name: Release
 
 on:
@@ -61,11 +61,11 @@ jobs:
           awk -v h="## $VERSION - " 'index($0, h) == 1 {f=1; next} /^## / {if (f) exit} f' CHANGELOG.md > notes.md
           gh release create "$GITHUB_REF_NAME" --verify-tag --title "axis-ip $VERSION" --notes-file notes.md
 
-      - name: Attach Linux binaries
+      - name: Attach Linux and Windows binaries
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Linux discovery is pure Go, so cross-compile static binaries without cgo.
+          # Discovery on Linux and Windows is pure Go, so cross-compile without cgo.
           for arch in amd64 arm64; do
             dir="axis-ip_${VERSION}_linux_${arch}"
             mkdir -p "$dir"
@@ -73,8 +73,20 @@ jobs:
             cp LICENSE README.md README_ja.md "$dir/"
             tar czf "$dir.tar.gz" "$dir"
           done
-          shasum -a 256 axis-ip_*_linux_*.tar.gz > checksums.txt
-          gh release upload "$GITHUB_REF_NAME" axis-ip_*_linux_*.tar.gz checksums.txt --clobber
+
+          # Embed the version, copyright and manifest into the Windows executables.
+          go install github.com/tc-hib/go-winres@v0.3.3
+          "$(go env GOPATH)/bin/go-winres" make --arch amd64,arm64 --product-version "$VERSION" --file-version "$VERSION"
+          for arch in amd64 arm64; do
+            dir="axis-ip_${VERSION}_windows_${arch}"
+            mkdir -p "$dir"
+            CGO_ENABLED=0 GOOS=windows GOARCH="$arch" go build -trimpath -ldflags "-s -w" -o "$dir/axis-ip.exe" .
+            cp LICENSE README.md README_ja.md "$dir/"
+            zip -qr "$dir.zip" "$dir"
+          done
+
+          shasum -a 256 axis-ip_*_linux_*.tar.gz axis-ip_*_windows_*.zip > checksums.txt
+          gh release upload "$GITHUB_REF_NAME" axis-ip_*_linux_*.tar.gz axis-ip_*_windows_*.zip checksums.txt --clobber
 
       - name: Update the Homebrew formula
         env:

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2 - 2026-11-11
+
+- The CLI password prompt now hides input with `golang.org/x/term` instead of the external `stty` command, so it also works where `stty` is unavailable, such as Windows.
+- CI now also runs vet and tests on Windows.
+- Releases now include Windows binaries for amd64 and arm64. Their file properties carry the version, copyright and an application manifest, embedded with go-winres.
+
 ## 0.4.1 - 2026-11-11
 
 - Changed the TUI title to "axis-ip <version> by bellx2" so that it is not mistaken for the official AXIS IP Utility.

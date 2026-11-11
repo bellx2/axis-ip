@@ -2,16 +2,16 @@
 
 English | [日本語](README_ja.md)
 
-An unofficial Axis camera IP utility for macOS and Linux, with a CLI and a TUI. It discovers Axis devices on the local L2 segment over mDNS and changes their IPv4 address through the VAPIX Network Settings API.
+An unofficial Axis camera IP utility for macOS, Linux and Windows, with a CLI and a TUI. It discovers Axis devices on the local L2 segment over mDNS and changes their IPv4 address through the VAPIX Network Settings API.
 
-The official AXIS IP Utility runs only on Windows. axis-ip covers the same everyday tasks on a Mac or a Linux machine: find devices, read their network settings, and assign a static address or switch back to DHCP.
+The official AXIS IP Utility runs only on Windows. axis-ip covers the same everyday tasks on a Mac or a Linux machine: find devices, read their network settings, and assign a static address or switch back to DHCP. It also runs on Windows, where it offers a scriptable CLI and the same workflow as on the other platforms.
 
 > [!NOTE]
 > axis-ip is an independent, unofficial project. It is not affiliated with, endorsed by or supported by Axis Communications AB. For support with Axis products, contact Axis.
 
 ## Requirements
 
-- macOS, or Linux on amd64 or arm64
+- macOS, Linux (amd64 or arm64) or Windows 10 and later (amd64 or arm64)
 - Axis devices running AXIS OS 8.50 or later (Network Settings API)
 - To build from source: Go 1.26 or later. On macOS, also the Xcode Command Line Tools (cgo needs a C compiler)
 
@@ -44,6 +44,10 @@ sudo install axis-ip_<version>_linux_amd64/axis-ip /usr/local/bin/
 ```
 
 The binaries are statically linked and need no other packages. `checksums.txt` on the same page lists their SHA-256 sums.
+
+### Windows: prebuilt binary
+
+Download `axis-ip_<version>_windows_amd64.zip` or `axis-ip_<version>_windows_arm64.zip` from the [releases page](https://github.com/bellx2/axis-ip/releases), extract it, and run `axis-ip.exe` from Windows Terminal or PowerShell. Add the folder to your `PATH` to run it from anywhere. The executable carries its version and copyright in its file properties.
 
 ### Go
 
@@ -143,7 +147,7 @@ axis-ip takes the password from, in order:
 ## How it talks to devices
 
 - On macOS, discovery reads the mDNSResponder cache through `DNSServiceBrowse`, `DNSServiceResolve` and `DNSServiceGetAddrInfo`.
-- On Linux, discovery sends mDNS queries from an ephemeral UDP port, and devices answer by unicast (RFC 6762 "legacy unicast"). It needs neither avahi-daemon nor UDP 5353, so it runs alongside avahi-daemon and systemd-resolved.
+- On Linux and Windows, discovery sends mDNS queries from an ephemeral UDP port, and devices answer by unicast (RFC 6762 "legacy unicast"). It needs neither avahi-daemon nor UDP 5353, so it runs alongside avahi-daemon, systemd-resolved and the mDNS service built into Windows.
 - Authentication is HTTP Digest (MD5 or SHA-256, qop=auth).
 - axis-ip tries HTTP first and switches to HTTPS when HTTP is unreachable or redirects. Over HTTPS it accepts self-signed certificates.
 - Writing requires that your machine can reach the `-ip` address. For a device that only has a static address on another subnet, temporarily add an address in that subnet to a local interface first, for example:
@@ -151,6 +155,7 @@ axis-ip takes the password from, in order:
   ```sh
   sudo ifconfig en0 alias 192.168.0.50 netmask 255.255.255.0   # macOS
   sudo ip addr add 192.168.0.50/24 dev eth0                    # Linux
+  netsh interface ipv4 add address "Ethernet" 192.168.0.50 255.255.255.0   # Windows, as administrator
   ```
 
 ## Troubleshooting
@@ -158,12 +163,13 @@ axis-ip takes the password from, in order:
 - **`no route to host` although the device answers `curl`:** macOS Local Network privacy is blocking the binary. Enable your terminal app under System Settings > Privacy & Security > Local Network and restart it. Apple's own tools such as `curl` are exempt, so a working `curl` does not prove the permission is granted.
 - **`DNSServiceBrowse failed -65563 (Service Not Running)`:** you are running inside a sandbox that blocks mDNSResponder. Run axis-ip outside the sandbox.
 - **Linux: `scan` finds nothing:** a firewall (ufw, firewalld, nftables) may drop the unicast replies, which arrive from UDP 5353 to an ephemeral port. Allow incoming UDP from source port 5353 on the local network, or try with the firewall disabled to confirm.
+- **Windows: `scan` finds nothing:** Windows Defender Firewall may block the unicast replies. If Windows asks whether to allow axis-ip.exe, allow it on private networks. Otherwise add an inbound rule that allows UDP from remote port 5353 for axis-ip.exe, and make sure the network profile is Private.
 - **WSL2:** the default NAT networking does not pass multicast to the LAN. Use mirrored networking mode.
 - **Containers:** run with host networking (`docker run --network host`) so that multicast reaches the LAN.
 
 ## Trademarks
 
-AXIS, AXIS COMMUNICATIONS, AXIS OS and VAPIX are trademarks or registered trademarks of Axis AB in various jurisdictions. Windows is a trademark of the Microsoft group of companies. macOS is a trademark of Apple Inc. Linux is a registered trademark of Linus Torvalds. All other trademarks are the property of their respective owners. They are used here only to describe compatibility.
+AXIS, AXIS COMMUNICATIONS, AXIS OS and VAPIX are trademarks or registered trademarks of Axis AB in various jurisdictions. Windows and Windows Terminal are trademarks of the Microsoft group of companies. macOS is a trademark of Apple Inc. Linux is a registered trademark of Linus Torvalds. All other trademarks are the property of their respective owners. They are used here only to describe compatibility.
 
 ## License
 
