@@ -48,7 +48,7 @@ func TestTUIFlow(t *testing.T) {
 
 	m := newTUIModel(time.Second, 5*time.Second)
 	m = send(t, m, scanDoneMsg{devs: []Device{{Model: "P1455", MAC: "ACCC8E000001", IPv4: []string{host}}}})
-	if !strings.Contains(m.View(), "AXIS IP Utility "+version) || !strings.Contains(m.View(), "by Bellx2") {
+	if !strings.Contains(m.View(), "axis-ip "+version+" by bellx2") {
 		t.Fatalf("title missing:\n%s", m.View())
 	}
 	if m.busy != "" || !strings.Contains(m.View(), "P1455") {

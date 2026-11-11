@@ -1,4 +1,4 @@
-# AXIS IP Utility
+# axis-ip
 
 axis-ip is an open-source Axis camera IP utility for macOS and Linux, written in Go. The official AXIS IP Utility is Windows-only; it finds devices on the same L2 segment and assigns IP addresses. axis-ip has a CLI and a TUI instead of a GUI, discovers devices over mDNS and changes addresses through VAPIX. The implementation is the Go package at the repository root; see README.md for usage. This file holds research notes.
 

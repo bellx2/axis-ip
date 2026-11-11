@@ -408,7 +408,7 @@ func (m *tuiModel) focusEdit(f int) tea.Cmd {
 
 func (m tuiModel) View() string {
 	var b strings.Builder
-	b.WriteString(titleStyle.Render("AXIS IP Utility "+version) + helpStyle.Render(" by Bellx2") + "\n\n")
+	b.WriteString(titleStyle.Render("axis-ip "+version) + helpStyle.Render(" by bellx2") + "\n\n")
 
 	switch m.screen {
 	case scrList:

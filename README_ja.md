@@ -2,9 +2,12 @@
 
 [English](README.md) | 日本語
 
-macOS と Linux 向けの Axis カメラ IP ユーティリティ（CLI と TUI）。同じ L2 セグメント上の Axis 機器を mDNS で探し、VAPIX Network Settings API で IPv4 アドレスを変更する。
+macOS と Linux 向けの非公式な Axis カメラ IP ユーティリティ（CLI と TUI）。同じ L2 セグメント上の Axis 機器を mDNS で探し、VAPIX Network Settings API で IPv4 アドレスを変更する。
 
 公式の AXIS IP Utility は Windows 専用である。axis-ip は、機器を探す、ネットワーク設定を読む、静的アドレスを割り当てる、DHCP に戻す、という日常の作業を Mac や Linux マシンで行う。
+
+> [!NOTE]
+> axis-ip は個人による非公式のプロジェクトであり、Axis Communications AB とは関係がなく、同社の承認やサポートを受けていない。Axis 製品についての問い合わせは Axis へ行う。
 
 ## 動作環境
 
@@ -157,6 +160,10 @@ IP は位置引数ではなく `-ip` で渡す。位置引数が残っている�
 - **Linux で `scan` が何も見つけない：** ファイアウォール（ufw、firewalld、nftables）がユニキャストの応答を落としている可能性がある。応答は UDP 5353 から空きポートへ届く。ローカルネットワークからの送信元ポート 5353 の UDP を許可するか、ファイアウォールを止めて切り分ける。
 - **WSL2：** 既定の NAT ネットワークではマルチキャストが LAN に届かない。mirrored モードを使う。
 - **コンテナ：** マルチキャストが LAN に届くよう、ホストネットワーク（`docker run --network host`）で実行する。
+
+## 商標
+
+AXIS、AXIS COMMUNICATIONS、AXIS OS、VAPIX は、Axis AB の各国における商標または登録商標である。Windows は Microsoft グループの商標、macOS は Apple Inc. の商標、Linux は Linus Torvalds の登録商標である。その他の商標はそれぞれの所有者に帰属する。本書では互換性の説明のためにのみ用いている。
 
 ## ライセンス
 

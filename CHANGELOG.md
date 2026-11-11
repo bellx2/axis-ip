@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 - 2026-11-11
+
+- Changed the TUI title to "axis-ip <version> by bellx2" so that it is not mistaken for the official AXIS IP Utility.
+- The README now states that axis-ip is unofficial and not affiliated with Axis, and lists the trademarks it mentions.
+
 ## 0.4.0 - 2026-11-11
 
 - Added Linux support. On Linux, discovery uses a pure Go mDNS querier that sends queries from an ephemeral port and receives unicast replies, so it needs neither avahi-daemon nor UDP 5353. macOS keeps using the system DNS-SD API.

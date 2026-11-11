@@ -2,9 +2,12 @@
 
 English | [日本語](README_ja.md)
 
-An Axis camera IP utility for macOS and Linux, with a CLI and a TUI. It discovers Axis devices on the local L2 segment over mDNS and changes their IPv4 address through the VAPIX Network Settings API.
+An unofficial Axis camera IP utility for macOS and Linux, with a CLI and a TUI. It discovers Axis devices on the local L2 segment over mDNS and changes their IPv4 address through the VAPIX Network Settings API.
 
 The official AXIS IP Utility runs only on Windows. axis-ip covers the same everyday tasks on a Mac or a Linux machine: find devices, read their network settings, and assign a static address or switch back to DHCP.
+
+> [!NOTE]
+> axis-ip is an independent, unofficial project. It is not affiliated with, endorsed by or supported by Axis Communications AB. For support with Axis products, contact Axis.
 
 ## Requirements
 
@@ -157,6 +160,10 @@ axis-ip takes the password from, in order:
 - **Linux: `scan` finds nothing:** a firewall (ufw, firewalld, nftables) may drop the unicast replies, which arrive from UDP 5353 to an ephemeral port. Allow incoming UDP from source port 5353 on the local network, or try with the firewall disabled to confirm.
 - **WSL2:** the default NAT networking does not pass multicast to the LAN. Use mirrored networking mode.
 - **Containers:** run with host networking (`docker run --network host`) so that multicast reaches the LAN.
+
+## Trademarks
+
+AXIS, AXIS COMMUNICATIONS, AXIS OS and VAPIX are trademarks or registered trademarks of Axis AB in various jurisdictions. Windows is a trademark of the Microsoft group of companies. macOS is a trademark of Apple Inc. Linux is a registered trademark of Linus Torvalds. All other trademarks are the property of their respective owners. They are used here only to describe compatibility.
 
 ## License
 
