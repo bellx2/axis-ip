@@ -9,10 +9,16 @@ macOS 向けの Axis カメラ IP ユーティリティ（CLI と TUI）。同�
 ## 動作環境
 
 - macOS（探索に OS の DNS-SD API を cgo で使う）
-- Go 1.26 以降
+- Go 1.26 以降と Xcode Command Line Tools（cgo に C コンパイラが要る）
 - AXIS OS 8.50 以降の Axis 機器（Network Settings API）
 
-## ビルド
+## インストール
+
+```sh
+go install github.com/bellx2/axis-ip@latest
+```
+
+クローンしたソースからビルドする場合は次のとおり。
 
 ```sh
 go build -o axis-ip .

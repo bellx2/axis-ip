@@ -9,10 +9,16 @@ The official AXIS IP Utility runs only on Windows. axis-ip covers the same every
 ## Requirements
 
 - macOS (discovery uses the system DNS-SD API through cgo)
-- Go 1.26 or later
+- Go 1.26 or later and the Xcode Command Line Tools (cgo needs a C compiler)
 - Axis devices running AXIS OS 8.50 or later (Network Settings API)
 
-## Build
+## Install
+
+```sh
+go install github.com/bellx2/axis-ip@latest
+```
+
+To build from a clone instead:
 
 ```sh
 go build -o axis-ip .

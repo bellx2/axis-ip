@@ -1,4 +1,4 @@
-module axis-ip
+module github.com/bellx2/axis-ip
 
 go 1.26.4
 

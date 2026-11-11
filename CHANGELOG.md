@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2 - 2026-11-11
+
+- Changed the module path to `github.com/bellx2/axis-ip` so the tool can be installed with `go install github.com/bellx2/axis-ip@latest`.
+- Added an MIT license.
+
 ## 0.3.1 - 2026-11-11
 
 - The TUI device list now sizes the table to the number of devices instead of stretching it to the terminal height. It scrolls only when the devices do not fit.
