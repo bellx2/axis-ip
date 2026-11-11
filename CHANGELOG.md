@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3 - 2026-11-11
+
+- Added Homebrew installation (`brew install bellx2/tap/axis-ip`) to the README.
+- Added a release workflow: pushing a `v*` tag tests the code, creates the GitHub release and updates the Homebrew formula.
+
 ## 0.3.2 - 2026-11-11
 
 - Changed the module path to `github.com/bellx2/axis-ip` so the tool can be installed with `go install github.com/bellx2/axis-ip@latest`.

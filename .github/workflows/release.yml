@@ -1,0 +1,75 @@
+# Pushing a v* tag tests the code, creates a GitHub release and updates the Homebrew formula.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # cgo calls the macOS DNS-SD API, so build and test on macOS.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Check that the tag, main.go and CHANGELOG.md agree
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+          grep -qx "const version = \"$v\"" main.go \
+            || { echo "::error::main.go version does not match $GITHUB_REF_NAME"; exit 1; }
+          grep -q "^## $v - " CHANGELOG.md \
+            || { echo "::error::CHANGELOG.md has no entry for $v"; exit 1; }
+
+      - name: Test
+        run: |
+          go vet ./...
+          go test ./...
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists"
+            exit 0
+          fi
+          # Use the CHANGELOG.md section of this version as release notes.
+          awk -v h="## $VERSION - " 'index($0, h) == 1 {f=1; next} /^## / {if (f) exit} f' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "axis-ip $VERSION" --notes-file notes.md
+
+      - name: Update the Homebrew formula
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz"
+          sha=$(curl -fsSL "$url" | shasum -a 256 | cut -d ' ' -f 1)
+          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/bellx2/homebrew-tap.git" tap
+          cd tap
+          sed -i '' -E \
+            -e "s|^  url \".*\"$|  url \"$url\"|" \
+            -e "s|^  sha256 \".*\"$|  sha256 \"$sha\"|" \
+            Formula/axis-ip.rb
+          if git diff --quiet; then
+            echo "Formula already points at $GITHUB_REF_NAME"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: axis-ip ${VERSION} の Formula 更新"
+          git push
+
+      - name: Install from the tap
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+        run: |
+          brew install --build-from-source bellx2/tap/axis-ip
+          brew test bellx2/tap/axis-ip
+          axis-ip version | grep -qx "axis-ip $VERSION"

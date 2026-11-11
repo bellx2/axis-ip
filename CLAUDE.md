@@ -18,6 +18,18 @@ Instance names have the form `AXIS <model> - <MAC>`, and the TXT record holds on
 
 Notes about specific devices on the development LAN (MACs, addresses, test results) live in `CLAUDE.local.md`. That file is git-ignored and must never be published. Do not copy real MACs, IP addresses, hostnames or realms into tracked files; use placeholder values in docs and tests.
 
+## Releasing
+
+Pushing a `v*` tag runs `.github/workflows/release.yml`, which tests on macOS, creates the GitHub release from the matching CHANGELOG.md section, points `Formula/axis-ip.rb` in `bellx2/homebrew-tap` at the new tarball, and installs it with Homebrew to verify. It needs the `TAP_GITHUB_TOKEN` secret (a token that can write to `bellx2/homebrew-tap`).
+
+To release:
+
+1. Set `const version` in `main.go` and add a `## <version> - <YYYY-MM-DD>` section to CHANGELOG.md. The workflow fails if the tag, `main.go` and CHANGELOG.md disagree.
+2. Commit and push to `main`.
+3. `git tag v<version> && git push origin v<version>`.
+
+Do not edit the formula in the tap by hand for a normal release.
+
 ## Discovery
 
 Use the service type `_axis-video._tcp.local.`. To include NVRs, also browse `_axis-nvr._tcp.local.`. The TXT `macaddress` identifies a device.

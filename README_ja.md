@@ -14,11 +14,30 @@ macOS 向けの Axis カメラ IP ユーティリティ（CLI と TUI）。同�
 
 ## インストール
 
+### Homebrew
+
+```sh
+brew install bellx2/tap/axis-ip
+```
+
+[bellx2/homebrew-tap](https://github.com/bellx2/homebrew-tap) を tap し、axis-ip をソースからビルドする。ビルドに使う Go は Homebrew が依存として入れるので、事前に用意しなくてよい。
+
+更新と削除は次のとおり。
+
+```sh
+brew upgrade axis-ip
+brew uninstall axis-ip
+```
+
+初回の実行時に、ターミナルアプリへのローカルネットワークのアクセス許可を macOS が求めることがある。許可するか、[トラブルシューティング](#トラブルシューティング) を参照する。
+
+### Go
+
 ```sh
 go install github.com/bellx2/axis-ip@latest
 ```
 
-クローンしたソースからビルドする場合は次のとおり。
+### ソースから
 
 ```sh
 go build -o axis-ip .

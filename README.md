@@ -14,11 +14,30 @@ The official AXIS IP Utility runs only on Windows. axis-ip covers the same every
 
 ## Install
 
+### Homebrew
+
+```sh
+brew install bellx2/tap/axis-ip
+```
+
+This taps [bellx2/homebrew-tap](https://github.com/bellx2/homebrew-tap) and builds axis-ip from source. Homebrew installs Go as a build dependency, so you do not need it beforehand.
+
+To upgrade or remove it later:
+
+```sh
+brew upgrade axis-ip
+brew uninstall axis-ip
+```
+
+On the first run, macOS may ask to allow your terminal app to access the local network. Allow it, or see [Troubleshooting](#troubleshooting).
+
+### Go
+
 ```sh
 go install github.com/bellx2/axis-ip@latest
 ```
 
-To build from a clone instead:
+### From source
 
 ```sh
 go build -o axis-ip .
