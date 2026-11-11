@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3 - 2026-11-11
+
+- The TUI opens the selected device's web interface in the default browser with `o`, on the device list and the detail screen. It uses `open` on macOS, `xdg-open` on Linux and the URL handler on Windows.
+
 ## 0.4.2 - 2026-11-11
 
 - The CLI password prompt now hides input with `golang.org/x/term` instead of the external `stty` command, so it also works where `stty` is unavailable, such as Windows.

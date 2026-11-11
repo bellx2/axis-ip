@@ -75,9 +75,9 @@ axis-ip [tui] [-timeout 2s] [-http-timeout 10s]
 
 | Screen | Keys |
 | --- | --- |
-| Device list | `↑`/`↓` select, `enter` open, `r` rescan, `q` quit |
+| Device list | `↑`/`↓` select, `enter` open, `o` open the web interface in the browser, `r` rescan, `q` quit |
 | Login | Enter the user (default `root`) and password, then `enter`. `AXIS_PASSWORD` pre-fills the password. `tab` switches fields, `esc` goes back |
-| Detail | Shows the `getNetworkInfo` result. `e` edit, `r` reload, `esc` back |
+| Detail | Shows the `getNetworkInfo` result. `e` edit, `o` open the web interface in the browser, `r` reload, `esc` back |
 | Edit | `space` on the mode field toggles static and DHCP. For static, enter the address as `IP/prefix` and an optional gateway. `tab`/`↑`/`↓` move, `enter` reviews |
 | Confirm | Shows the current and new settings side by side. `y` writes, `n`/`esc` returns to the edit screen |
 

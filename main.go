@@ -16,7 +16,7 @@ import (
 	"golang.org/x/term"
 )
 
-const version = "0.4.2"
+const version = "0.4.3"
 
 const passwordEnv = "AXIS_PASSWORD"
 

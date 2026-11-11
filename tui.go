@@ -36,6 +36,10 @@ type (
 		err  error
 	}
 	setDoneMsg  struct{ err error }
+	openDoneMsg struct {
+		url string
+		err error
+	}
 	waitDoneMsg struct{} // the post-write wait for the address change has elapsed
 )
 
@@ -226,6 +230,14 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case waitDoneMsg:
 		return m, m.scanCmd()
+
+	case openDoneMsg:
+		if msg.err != nil {
+			m.err = fmt.Errorf("cannot open %s: %v", msg.url, msg.err)
+		} else {
+			m.err, m.status = nil, "Opened "+msg.url+" in the browser"
+		}
+		return m, nil
 	}
 	return m, nil
 }
@@ -239,6 +251,16 @@ func (m tuiModel) handleKey(k tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "r":
 			m.busy, m.err, m.status = "Scanning", nil, ""
 			return m, tea.Batch(m.spinner.Tick, m.scanCmd())
+		case "o":
+			if len(m.devs) == 0 {
+				return m, nil
+			}
+			d := m.devs[m.table.Cursor()]
+			if len(d.IPv4) == 0 {
+				m.err = fmt.Errorf("no IPv4 address known for %s", d.Model)
+				return m, nil
+			}
+			return m, openCmd(deviceURL(d.IPv4[0], d.Port, ""))
 		case "enter":
 			if len(m.devs) == 0 {
 				return m, nil
@@ -288,6 +310,8 @@ func (m tuiModel) handleKey(k tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "r":
 			return m.startGet(m.creds[m.ip])
+		case "o":
+			return m, openCmd(deviceURL(m.ip, m.dev.Port, m.client.scheme))
 		case "e":
 			if m.net.IPv4.ConfigurationMode == "" {
 				m.err = fmt.Errorf("cannot read the IPv4 settings of %s, editing is disabled", m.net.Name)
@@ -355,6 +379,11 @@ func (m *tuiModel) fitTable() {
 		h = min(h, max(header+1, m.termHeight-8))
 	}
 	m.table.SetHeight(h)
+}
+
+// openCmd opens url in the browser without blocking the UI.
+func openCmd(url string) tea.Cmd {
+	return func() tea.Msg { return openDoneMsg{url, openURL(url)} }
 }
 
 func (m tuiModel) startGet(c creds) (tea.Model, tea.Cmd) {
@@ -464,11 +493,11 @@ func (m tuiModel) devLabel() string {
 func (m tuiModel) help() string {
 	switch m.screen {
 	case scrList:
-		return "↑/↓ select  enter open  r rescan  q quit"
+		return "↑/↓ select  enter open  o browser  r rescan  q quit"
 	case scrLogin:
 		return "tab switch field  enter connect  esc back"
 	case scrDetail:
-		return "e edit  r reload  esc back  q quit"
+		return "e edit  o browser  r reload  esc back  q quit"
 	case scrEdit:
 		return "tab/↑/↓ move  space toggle mode  enter review  esc back"
 	case scrConfirm:
